@@ -1,0 +1,61 @@
+name: Synchro Moodle & OneDrive → Notion
+
+on:
+  schedule:
+    - cron: "17 5,17 * * *" # 2 fois par jour (≈ 7 h et 19 h, heure de Paris)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Simulation (n'écrit rien dans Notion)"
+        type: boolean
+        default: false
+      only:
+        description: "Limiter à : moodle, onedrive (vide = tout)"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qg-sync
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt pytest
+      - run: python -m pytest -q
+
+  sync:
+    needs: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Synchroniser
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          MOODLE_URL: ${{ vars.MOODLE_URL || 'https://moodle.ipsa.fr' }}
+          MOODLE_TOKEN: ${{ secrets.MOODLE_TOKEN }}
+          MOODLE_ICS_URL: ${{ secrets.MOODLE_ICS_URL }}
+          MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
+          ONEDRIVE_PERSO_REFRESH_TOKEN: ${{ secrets.ONEDRIVE_PERSO_REFRESH_TOKEN }}
+          ONEDRIVE_PERSO_ROOT: ${{ vars.ONEDRIVE_PERSO_ROOT }}
+          ONEDRIVE_ECOLE_REFRESH_TOKEN: ${{ secrets.ONEDRIVE_ECOLE_REFRESH_TOKEN }}
+          ONEDRIVE_ECOLE_ROOT: ${{ vars.ONEDRIVE_ECOLE_ROOT }}
+          GH_SECRETS_TOKEN: ${{ secrets.GH_SECRETS_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run && '--dry-run' || '' }}
+          ONLY: ${{ inputs.only }}
+        run: python -m qg_sync $DRY_RUN ${ONLY:+--only "$ONLY"}
