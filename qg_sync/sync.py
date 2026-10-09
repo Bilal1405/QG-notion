@@ -41,6 +41,7 @@ from .notion import (
     same_props,
 )
 from .onedrive import DriveItem, GraphAuthError, GraphClient, GraphError, refresh_access_token
+from .planning import planning_title
 
 PARIS = ZoneInfo("Europe/Paris")
 
@@ -423,13 +424,43 @@ class Syncer:
         except requests.RequestException as exc:
             self.warnings.append(f"secret {account.secret_name} non mis à jour ({type(exc).__name__})")
 
+    # -- Planning IPSA --
+
+    def sync_planning(self) -> None:
+        """Salle dans le titre des créneaux à venir, pour Notion Calendar."""
+        since = self.now - timedelta(days=1)
+        for page in self.notion.query_all(DATA_SOURCES["planning"]):
+            props = page.get("properties", {})
+            start = ((props.get("Horaire") or {}).get("date") or {}).get("start")
+            if not start:
+                continue
+            when = datetime.fromisoformat(start.replace("Z", "+00:00"))
+            if when.tzinfo is None:
+                when = when.replace(tzinfo=PARIS)
+            if when < since:
+                continue
+            title = read_plain(props.get("Cours"))
+            desired = planning_title(title, read_plain(props.get("Salle")))
+            if desired == title:
+                self.stats["planning"]["inchangés"] += 1
+                continue
+            if not self.cfg.dry_run:
+                self.notion.update_page(page["id"], {"Cours": p_title(desired)})
+            self.stats["planning"]["salle ajoutée"] += 1
+
     # -- Point d'entrée --
 
     def run(self, only: set[str] | None = None) -> None:
+        if not only or "planning" in only:
+            self.sync_planning()
+        moodle = (not only or "moodle" in only) and bool(self.cfg.moodle_token or self.cfg.moodle_ics_url)
+        onedrive = (not only or "onedrive" in only) and bool(self.cfg.onedrive)
+        if not (moodle or onedrive):
+            return
         courses = CourseIndex.from_pages(self.notion.query_all(DATA_SOURCES["cours"]))
-        if (not only or "moodle" in only) and (self.cfg.moodle_token or self.cfg.moodle_ics_url):
+        if moodle:
             self.sync_moodle(courses)
-        if (not only or "onedrive" in only) and self.cfg.onedrive:
+        if onedrive:
             self.sync_onedrive(courses)
 
     def report(self) -> str:

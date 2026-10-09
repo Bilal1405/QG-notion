@@ -14,6 +14,7 @@ DATA_SOURCES = {
     "ressources": "e7508ffa-de3d-40d1-8697-4bb740d1bcec",
     "annonces": "8cb421da-8a9c-474d-a3bc-2adccbbd086d",
     "notes_moodle": "7d87b2f5-592d-47a0-bf0f-b978e471e234",
+    "planning": "4ac769b1-4051-427c-ad57-572f15daca72",
 }
 
 

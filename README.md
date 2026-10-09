@@ -9,6 +9,7 @@ Ce script remplit automatiquement le QG Notion (« 🚀 QG Bilal »). Il tourne 
 | Moodle | Forum « Annonces » de chaque cours (120 derniers jours) | **Annonces** |
 | Moodle | Carnet de notes (hors totaux) | **Notes Moodle** |
 | OneDrive perso / école | Fichiers rangés dans un dossier de matière | **Ressources** + lien « Dossier OneDrive » dans Cours IPSA |
+| Planning IPSA (déjà dans Notion) | Salle ajoutée au titre des créneaux à venir (« Thermodynamique 1 · 📍BC309 ») pour qu'elle s'affiche dans Notion Calendar | **Planning IPSA** |
 
 Chaque élément est rattaché à sa matière grâce au **code IPSA** présent dans son nom : Ma211, Aé211, Phs213… Ce code doit apparaître dans le nom du cours Moodle ou du dossier OneDrive. Si la correspondance échoue, renseigne l'ID du cours Moodle dans la colonne « Cours Moodle » de la matière.
 
