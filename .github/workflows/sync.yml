@@ -10,7 +10,7 @@ on:
         type: boolean
         default: false
       only:
-        description: "Limiter à : moodle, onedrive (vide = tout)"
+        description: "Limiter à : planning, moodle, onedrive (vide = tout)"
         type: string
         default: ""
 
